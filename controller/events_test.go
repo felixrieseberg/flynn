@@ -8,7 +8,7 @@ import (
 	ct "github.com/flynn/flynn/controller/types"
 )
 
-func (s *S) TestAppEvents(c *C) {
+func (s *S) TestEvents(c *C) {
 	app1 := s.createTestApp(c, &ct.App{Name: "app1"})
 	app2 := s.createTestApp(c, &ct.App{Name: "app2"})
 	release := s.createTestRelease(c, &ct.Release{})
@@ -25,7 +25,7 @@ func (s *S) TestAppEvents(c *C) {
 		{ID: jobID3, AppID: app2.ID, ReleaseID: release.ID, Type: "web", State: "up"},
 	}
 
-	listener := newEventListener(&AppRepo{db: s.hc.db})
+	listener := newEventListener(&EventRepo{db: s.hc.db})
 	c.Assert(listener.Listen(), IsNil)
 
 	// sub1 should receive job events for app1, job1

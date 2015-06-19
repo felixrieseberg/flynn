@@ -42,26 +42,26 @@ func migrateDB(db *sql.DB) error {
 )`,
 		`CREATE UNIQUE INDEX ON apps (name) WHERE deleted_at IS NULL`,
 
-		`CREATE SEQUENCE app_event_ids`,
-		`CREATE TYPE app_event_type AS ENUM ('app_deletion', 'deployment', 'job', 'scale')`,
-		`CREATE TABLE app_events (
-    event_id    bigint         PRIMARY KEY DEFAULT nextval('app_event_ids'),
+		`CREATE SEQUENCE event_ids`,
+		`CREATE TYPE event_type AS ENUM ('app_deletion', 'deployment', 'job', 'scale')`,
+		`CREATE TABLE events (
+    event_id    bigint         PRIMARY KEY DEFAULT nextval('event_ids'),
     app_id      uuid           NOT NULL REFERENCES apps (app_id),
-    object_type app_event_type NOT NULL,
+    object_type event_type NOT NULL,
     object_id   text           NOT NULL,
     unique_id   text,
     data        text,
     created_at  timestamptz    NOT NULL DEFAULT now()
 )`,
-		`CREATE UNIQUE INDEX ON app_events (unique_id)`,
+		`CREATE UNIQUE INDEX ON events (unique_id)`,
 		`CREATE FUNCTION notify_app_event() RETURNS TRIGGER AS $$
     BEGIN
-	PERFORM pg_notify('app_events', NEW.event_id || ':' || NEW.app_id);
+	PERFORM pg_notify('events', NEW.event_id || ':' || NEW.app_id);
 	RETURN NULL;
     END;
 $$ LANGUAGE plpgsql`,
 		`CREATE TRIGGER notify_app_event
-    AFTER INSERT ON app_events
+    AFTER INSERT ON events
     FOR EACH ROW EXECUTE PROCEDURE notify_app_event()`,
 
 		`CREATE TABLE formations (
@@ -77,7 +77,7 @@ $$ LANGUAGE plpgsql`,
 		`CREATE FUNCTION notify_formation() RETURNS TRIGGER AS $$
     BEGIN
         PERFORM pg_notify('formations', NEW.app_id || ':' || NEW.release_id);
-        INSERT INTO app_events (app_id, object_id, object_type, data) VALUES(NEW.app_id, NEW.app_id || ':' || NEW.release_id, 'scale', hstore_to_json(NEW.processes));
+        INSERT INTO events (app_id, object_id, object_type, data) VALUES(NEW.app_id, NEW.app_id || ':' || NEW.release_id, 'scale', hstore_to_json(NEW.processes));
         RETURN NULL;
     END;
 $$ LANGUAGE plpgsql`,

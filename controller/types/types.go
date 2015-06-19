@@ -202,7 +202,7 @@ const (
 	EventTypeScale       EventType = "scale"
 )
 
-type AppEvent struct {
+type Event struct {
 	ID         int64           `json:"id,omitempty"`
 	AppID      string          `json:"app,omitempty"`
 	ObjectType EventType       `json:"object_type,omitempty"`

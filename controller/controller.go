@@ -144,6 +144,7 @@ func appHandler(c handlerConfig) http.Handler {
 	jobRepo := NewJobRepo(c.db)
 	formationRepo := NewFormationRepo(c.db, appRepo, releaseRepo, artifactRepo)
 	deploymentRepo := NewDeploymentRepo(c.db, c.pgxpool)
+	eventRepo := NewEventRepo(c.db)
 
 	api := controllerAPI{
 		appRepo:        appRepo,
@@ -154,6 +155,7 @@ func appHandler(c handlerConfig) http.Handler {
 		jobRepo:        jobRepo,
 		resourceRepo:   resourceRepo,
 		deploymentRepo: deploymentRepo,
+		eventRepo:      eventRepo,
 		clusterClient:  c.cc,
 		logaggc:        c.lc,
 		routerc:        c.rc,
@@ -170,7 +172,7 @@ func appHandler(c handlerConfig) http.Handler {
 
 	httpRouter.POST("/apps/:apps_id", httphelper.WrapHandler(api.UpdateApp))
 	httpRouter.GET("/apps/:apps_id/log", httphelper.WrapHandler(api.appLookup(api.AppLog)))
-	httpRouter.GET("/apps/:apps_id/events", httphelper.WrapHandler(api.appLookup(api.AppEvents)))
+	httpRouter.GET("/apps/:apps_id/events", httphelper.WrapHandler(api.appLookup(api.Events)))
 	httpRouter.DELETE("/apps/:apps_id", httphelper.WrapHandler(api.appLookup(api.DeleteApp)))
 
 	httpRouter.PUT("/apps/:apps_id/formations/:releases_id", httphelper.WrapHandler(api.appLookup(api.PutFormation)))
@@ -243,6 +245,7 @@ type controllerAPI struct {
 	jobRepo        *JobRepo
 	resourceRepo   *ResourceRepo
 	deploymentRepo *DeploymentRepo
+	eventRepo      *EventRepo
 	clusterClient  clusterClient
 	logaggc        logaggc.Client
 	routerc        routerc.Client
